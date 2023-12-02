@@ -1,8 +1,6 @@
 module Main where
 
-import Control.Monad
-import Data.Char
-import Data.List
+import Data.Char (isDigit)
 import System.IO
 import Text.Read (readMaybe)
 
@@ -15,17 +13,19 @@ getDigits line = filter isDigit line
 strToInt :: String -> Maybe Int
 strToInt str = readMaybe str
 
-norm :: Maybe Int -> Int
-norm Nothing = 0
-norm (Just n) = n
+fromMaybeNum :: Num a => Maybe a -> a
+fromMaybeNum Nothing = 0
+fromMaybeNum (Just n) = n
 
 sumList :: Num a => [a] -> a
 sumList [] = 0
 sumList (x:xs) = x + sumList xs
 
+sumCalibrationValues :: String -> String
+sumCalibrationValues input = result
+    where
+        extractValue = fromMaybeNum . strToInt . getFL . getDigits
+        result = show $ sumList (map extractValue (lines input))
+
 main :: IO()
-main = do
-    contents <- getContents
-    let calibrationVal = (map (norm . strToInt . getFL . getDigits) (lines contents))
-    putStr $ show (sumList calibrationVal)
-    
+main = interact sumCalibrationValues
