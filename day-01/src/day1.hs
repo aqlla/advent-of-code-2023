@@ -1,6 +1,7 @@
 module Main where
 
 import Data.Char (isDigit)
+import qualified Data.Map
 import System.IO
 import Text.Read (readMaybe)
 
