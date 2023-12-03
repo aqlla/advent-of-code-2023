@@ -82,7 +82,7 @@ firstOccurrenceIndex haystack needle =
   if L.isPrefixOf needle haystack
     then Just 0
   else case firstOccurrenceIndex (drop 1 haystack) needle of
-    Just x -> Just(x+1)
+    Just x -> Just (x+1)
     Nothing -> Nothing
     
 lastOccurrenceIndex :: String -> String -> Maybe Int
@@ -91,7 +91,7 @@ lastOccurrenceIndex haystack needle =
   if L.isSuffixOf needle haystack
     then Just ((length haystack) - (length needle))
   else case lastOccurrenceIndex (init haystack) needle of
-    Just x -> Just(x)
+    Just x -> Just x
     Nothing -> Nothing
     
 allOccurrenceIndex :: String -> String -> [Int]
