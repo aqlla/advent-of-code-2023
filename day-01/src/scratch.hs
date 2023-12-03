@@ -1,34 +1,53 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 import qualified Data.Char as C
 import qualified Data.List as L
 import Data.Maybe (fromJust, isJust, isNothing)
-  
-numTokens :: [(String, String)]
-numTokens = [
-  ("zero",  "0"),
-  ("one",   "1"),
-  ("two",   "2"),
-  ("three", "3"),
-  ("four",  "4"),
-  ("five",  "5"),
-  ("six",   "6"),
-  ("seven", "7"),
-  ("eight", "8"),
-  ("nine",  "9")]
+import qualified Data.Text as T
+import Text.Read (readMaybe)
+-- import qualified Text.Regex as R
+import Debug.Trace
+import Text.Printf
 
-strToInt :: String -> Int
-strToInt = read
+main :: IO ()
+main = do
+  let numWords = [("zero",  "0"),("one",   "1"),("two",   "2"),("three", "3"),("four",  "4"),("five",  "5"),("six",   "6"),("seven", "7"),("eight", "8"),("nine",  "9")]
+  let ls = ["eight9fhstbssrplmdlncmmqqnklb39ninejz", "three656", "ppjvndvknbtpfsncplmhhrlh5"]
+  let dls = map (norm . readMaybe . getFL . getDigits . (replaceAllIn numWords)) ls
   
-applyList :: (a -> b) -> [a] -> [b]
-applyList fn xs = [fn x | x <- xs]
-
-tupCat :: (String, String) -> String
-tupCat tup = L.intercalate "" [fst tup, snd tup]
-
-fromJustTup :: (Maybe a, Maybe b) -> (a, b)
-fromJustTup tup = (fromJust $ fst tup, fromJust $ snd tup)
+  putStrLn $ show (sumList dls)
+  let ws = map (\(x,y) -> [T.unpack x, T.unpack y]) numWords
   
-justInTup :: (Maybe a, Maybe b) -> Bool
-justInTup (x, y) = True --isJust x || isJust y
+  -- let flOccursPartial = map (\(x, y) -> (y, anyFirstLastOccursIndex [x,y])) ws
+  -- let flOccurs = map (\x -> x)
+  
+  let occurencesPerLine = map (anyFirstLastOccursIndex . T.unpack) ls
+  -- let justFlOccurs = filter (\(_,(f,l)) -> (isJust f) && (isJust l)) flOccurs
+  let firstAndLastDigits = map (\o -> (filter (\(x,y) -> isJust x || isJust y) [o num | num <- ws])) occurencesPerLine
+  
+  -- let flOccurs = map (\(x, y) -> (y, anyFirstLastOccursIndex "eight9fhstbssrplmdlncmmqqnklb39ninejz" [x,y])) ws
+  -- let justFlOccurs = filter (\(_,(f,l)) -> (isJust f) && (isJust l)) flOccurs
+  -- let firstAndLastDigits = map (\x -> (firstDigit x, lastDigit x)) [justFlOccurs]
+
+  putStrLn $ show firstAndLastDigits
+  
+  -- putStr $ show (T.replace "eight" "8" "eight9fhstbssrplmdlncmmqqnklb39ninejz")
+  -- putStr $ show $ map (replaceAllIn numWords) ls
+
+
+getFL :: String -> String
+getFL line = [L.head line] ++ [L.last line]
+
+getDigits :: String -> String
+getDigits line = filter C.isDigit line
+
+norm :: Maybe Int -> Int
+norm Nothing = 0
+norm (Just n) = n
+
+sumList :: Num a => [a] -> a
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
 
 minBy :: Ord b => (a -> b) -> [a] -> a
 minBy fn list =
@@ -79,16 +98,12 @@ lastDigit :: [(String, (Maybe Int, Maybe Int))] -> String
 lastDigit xs =
   fst (foldl (maxByMaybe (\(_,(_,hi)) -> hi)) (head xs) xs)
   
-getFirstAndLastDigits :: [(String, (Maybe Int, Maybe Int))] -> (String, String)
-getFirstAndLastDigits ts = (firstDigit ts, lastDigit ts)
-  
-anyFirstLastOccursIndex :: String -> [String] -> (String, (Maybe Int, Maybe Int))
+anyFirstLastOccursIndex :: String -> [String] -> (Maybe Int, Maybe Int)
 anyFirstLastOccursIndex haystack needles =
   (
-    last needles, (
-      anyFirstOccursIndex haystack needles, 
-      anyLastOccursIndex haystack needles
-  ))
+    anyFirstOccursIndex haystack needles, 
+    anyLastOccursIndex haystack needles
+  )
 
 anyFirstOccursIndex :: String -> [String] -> Maybe Int
 anyFirstOccursIndex haystack needles = first
@@ -107,7 +122,7 @@ firstOccurrenceIndex [] _ = Nothing
 firstOccurrenceIndex haystack needle =
   -- if L.isPrefixOf needle (traceShowId haystack)
   if L.isPrefixOf needle haystack
-    then Just 0
+    then (Just 0)
   else case firstOccurrenceIndex (drop 1 haystack) needle of
     Just x -> Just(x+1)
     Nothing -> Nothing
@@ -117,7 +132,7 @@ lastOccurrenceIndex [] _ = Nothing
 lastOccurrenceIndex haystack needle =
   -- if L.isPrefixOf needle (traceShowId haystack)
   if L.isSuffixOf needle haystack
-    then Just ((length haystack) - (length needle))
+    then (Just ((length haystack) - (length needle)))
   else case lastOccurrenceIndex (init haystack) needle of
     Just x -> Just(x)
     Nothing -> Nothing
@@ -126,21 +141,18 @@ lastOccurrenceIndex haystack needle =
 allOccurrenceIndex :: String -> String -> [Int]
 allOccurrenceIndex [] _ = []
 allOccurrenceIndex haystack needle =
-  case firstOccurrenceIndex haystack needle of
+  case (firstOccurrenceIndex haystack needle) of
     Nothing -> []
     Just 0 -> [0] ++ (allOccurrenceIndex (drop 1 haystack) needle)
-    Just x -> [x-1] ++ (allOccurrenceIndex (drop x haystack) needle)
+    Just x -> [x-1] ++ (allOccurrenceIndex (drop (x+1) haystack) needle)
+
+-- numOccurrenceIndex :: String -> (String, String) -> 
+  
 
 
-doIt :: String -> String
-doIt input =
-  show $ sum firstAndLastDigits
-  where
-    -- Apply first argument (input lines) to occurence search function.
-    occurencesPerLine = map anyFirstLastOccursIndex $ lines input
+replaceAllIn :: [(T.Text, T.Text)] -> T.Text -> String
+replaceAllIn replacements input =
+  T.unpack $ foldl (\acc (k, v) -> T.replace k v acc) input replacements
 
-    -- Apply numbers list to search for all number token occurences in each line if input file 
-    firstAndLastDigits = map (\o -> strToInt $ tupCat $ getFirstAndLastDigits [o [fst n, snd n] | n <- numTokens]) occurencesPerLine
-
-main :: IO()
-main = interact doIt
+-- replace :: Eq a => [a] -> [a] -> [a] -> [a]
+-- replace old new l = T.intercalate new . T.splitOn old $ l
