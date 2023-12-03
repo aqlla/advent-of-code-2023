@@ -65,16 +65,16 @@ anyFirstLastOccursIndex haystack needles = (
       anyLastOccursIndex haystack needles))
 
 anyFirstOccursIndex :: String -> [String] -> Maybe Int
-anyFirstOccursIndex haystack needles = first
+anyFirstOccursIndex haystack needles = 
+  foldl minMaybe Nothing occurs
   where
     occurs = map (firstOccurrenceIndex haystack) needles
-    first = foldl minMaybe Nothing occurs
     
 anyLastOccursIndex :: String -> [String] -> Maybe Int
-anyLastOccursIndex haystack needles = lasst
+anyLastOccursIndex haystack needles =
+  foldl maxMaybe Nothing occurs
   where
     occurs = map (lastOccurrenceIndex haystack) needles
-    lasst = foldl maxMaybe Nothing occurs
 
 firstOccurrenceIndex :: String -> String -> Maybe Int
 firstOccurrenceIndex [] _ = Nothing
