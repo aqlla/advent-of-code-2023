@@ -1,9 +1,0 @@
-{
-    "haskell.manageHLS": "GHCup",
-    "haskell.ghcupExecutablePath": "\"C:\\ghcup\\bin\\ghcup.exe\"",
-    "haskell.serverExecutablePath": "",
-    "haskell.serverEnvironment": {
-
-        "GHCUP_INSTALL_BASE_PREFIX": "\"C:\\\""
-    }
-}
