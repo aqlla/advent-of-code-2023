@@ -34,7 +34,7 @@ minMaybe (Just x) (Just y) = Just $ min x y
 maxByMaybe :: Ord b => (a -> Maybe b) -> a -> a -> a
 maxByMaybe fn x y
   | (isNothing fx) && (isNothing fy) = y
-  | otherwise = if (maxMaybe fx fy) == fx then x else y
+  | otherwise = if maxMaybe fx fy == fx then x else y
   where 
     fx = fn x
     fy = fn y
@@ -42,18 +42,18 @@ maxByMaybe fn x y
 minByMaybe :: Ord b => (a -> Maybe b) -> a -> a -> a
 minByMaybe fn x y
   | (isNothing fx) && (isNothing fy) = y
-  | otherwise = if (minMaybe fx fy) == fx then x else y
+  | otherwise = if minMaybe fx fy == fx then x else y
   where 
     fx = fn x
     fy = fn y
 
 firstDigit :: [(String, (Maybe Int, Maybe Int))] -> String
 firstDigit xs =
-  fst (foldl (minByMaybe (\(_,(lo,_)) -> lo)) (head xs) xs)
+  fst $ foldl (minByMaybe (\(_,(lo,_)) -> lo)) (head xs) xs
 
 lastDigit :: [(String, (Maybe Int, Maybe Int))] -> String
 lastDigit xs =
-  fst (foldl (maxByMaybe (\(_,(_,hi)) -> hi)) (head xs) xs)
+  fst $ foldl (maxByMaybe (\(_,(_,hi)) -> hi)) (head xs) xs
   
 getFirstAndLastDigits :: [(String, (Maybe Int, Maybe Int))] -> (String, String)
 getFirstAndLastDigits ts = (firstDigit ts, lastDigit ts)
@@ -66,51 +66,42 @@ anyFirstLastOccursIndex haystack needles = (
 
 anyFirstOccursIndex :: String -> [String] -> Maybe Int
 anyFirstOccursIndex haystack needles = 
-  foldl minMaybe Nothing occurs
-  where
-    occurs = map (firstOccurrenceIndex haystack) needles
+  foldl minMaybe Nothing $ map (firstOccurrenceIndex haystack) needles
     
 anyLastOccursIndex :: String -> [String] -> Maybe Int
 anyLastOccursIndex haystack needles =
-  foldl maxMaybe Nothing occurs
-  where
-    occurs = map (lastOccurrenceIndex haystack) needles
+  foldl maxMaybe Nothing $ map (lastOccurrenceIndex haystack) needles
 
 firstOccurrenceIndex :: String -> String -> Maybe Int
 firstOccurrenceIndex [] _ = Nothing
-firstOccurrenceIndex haystack needle =
-  if L.isPrefixOf needle haystack
-    then Just 0
-  else case firstOccurrenceIndex (drop 1 haystack) needle of
-    Just x -> Just (x+1)
-    Nothing -> Nothing
+firstOccurrenceIndex haystack needle
+  | L.isPrefixOf needle haystack = Just 0
+  | otherwise = case firstOccurrenceIndex (drop 1 haystack) needle of
+      Just x -> Just (x+1)
+      Nothing -> Nothing
     
 lastOccurrenceIndex :: String -> String -> Maybe Int
 lastOccurrenceIndex [] _ = Nothing
-lastOccurrenceIndex haystack needle =
-  if L.isSuffixOf needle haystack
-    then Just ((length haystack) - (length needle))
-  else case lastOccurrenceIndex (init haystack) needle of
-    Just x -> Just x
-    Nothing -> Nothing
+lastOccurrenceIndex haystack needle
+  | L.isSuffixOf needle haystack = Just ((length haystack) - (length needle))
+  | otherwise = case lastOccurrenceIndex (init haystack) needle of
+      Just x -> Just x
+      Nothing -> Nothing
     
 allOccurrenceIndex :: String -> String -> [Int]
 allOccurrenceIndex [] _ = []
 allOccurrenceIndex haystack needle =
   case firstOccurrenceIndex haystack needle of
     Nothing -> []
-    Just 0 -> [0] ++ (allOccurrenceIndex (drop 1 haystack) needle)
-    Just x -> [x-1] ++ (allOccurrenceIndex (drop x haystack) needle)
+    Just 0 -> [0] ++ allOccurrenceIndex (drop 1 haystack) needle
+    Just x -> [x-1] ++ allOccurrenceIndex (drop x haystack) needle
 
 doIt :: String -> String
 doIt input =
-  show $ sum firstAndLastDigits
-  where
-    -- Apply first argument (input lines) to occurence search function.
-    occurencesPerLine = map anyFirstLastOccursIndex $ lines input
-
-    -- Apply numbers list to search for all number token occurences in each line if input file 
-    firstAndLastDigits = map (\o -> strToInt $ tupCat $ getFirstAndLastDigits [o [fst n, snd n] | n <- numTokens]) occurencesPerLine
+  show 
+    $ sum 
+    $ map (\line -> strToInt $ tupCat $ getFirstAndLastDigits [anyFirstLastOccursIndex line [fst num, snd num] | num <- numTokens]) 
+    $ lines input
 
 main :: IO()
 main = interact doIt
