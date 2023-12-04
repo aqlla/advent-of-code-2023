@@ -43,4 +43,3 @@ part2 input = sum $ map (\x -> foldr (*) 1 (getMaxRGB (snd x))) $ map parseLine 
 
 main :: IO()
 main = interact (\input -> show $ part2 $ lines $ input)
--- main = interact (\input -> show $ sum $ map fst $ filterPossible $ map parseLine $ lines $ input)
