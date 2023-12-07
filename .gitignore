@@ -3,3 +3,5 @@
 *.exe
 
 .vscode/
+day-*/day*
+!day-*/day*.hs
